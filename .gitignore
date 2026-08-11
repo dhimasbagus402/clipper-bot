@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# Secrets & account data — NEVER commit these
+# ---------------------------------------------------------------------------
+.env
+client_secret*.json
+token.json
+token_*.json
+channels.json
+!channels.example.json
+
+# Local configuration (may contain client briefs, paths, campaign data)
+config.yaml
+*.bak
+
+# ---------------------------------------------------------------------------
+# Generated data & media
+# ---------------------------------------------------------------------------
+projects/
+soundtracks/
+incoming/*
+!incoming/.gitkeep
+assets/watermarks/*
+!assets/watermarks/.gitkeep
+
+*.mp4
+*.mkv
+*.mov
+*.webm
+*.avi
+*.m4v
+*.flv
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.part
+*.ytdl
+*.db
+*.sqlite3
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# Editors / OS / tooling
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+Desktop.ini
+.DS_Store

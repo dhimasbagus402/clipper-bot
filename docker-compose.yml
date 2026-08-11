@@ -1,0 +1,45 @@
+services:
+  dashboard:
+    build: .
+    container_name: clipper-studio
+    ports:
+      - "5000:5000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "5000"
+      TZ: ${TZ:-Asia/Jakarta}   # jam dashboard mengikuti zona ini (WIB = UTC+7)
+      # Ollama jalan di HOST (Windows), bukan di container
+      ACF_LLM_HOST: http://host.docker.internal:11434
+      # redirect login Google mendarat di dashboard sendiri (/oauth2cb).
+      # Kalau port publish diganti (mis. 8080:5000), samakan angka portnya di sini.
+      OAUTH_REDIRECT_URL: http://localhost:5000/oauth2cb
+      # login dashboard — atur di file .env
+      DASH_USERNAME: ${DASH_USERNAME:-admin}
+      DASH_PASSWORD: ${DASH_PASSWORD:?Set DASH_PASSWORD di file .env dulu}
+      # opsional: token Hugging Face (unduhan model lebih cepat / rate limit lebih tinggi)
+      HF_TOKEN: ${HF_TOKEN:-}
+      # batas TOTAL unggah per request, MB (unggah folder = semua file sekaligus)
+      DASH_MAX_UPLOAD_MB: ${DASH_MAX_UPLOAD_MB:-8192}
+    volumes:
+      # seluruh folder project (kode + config.yaml + channels.json + token_*.json
+      # + projects/ + incoming/) — semua perubahan persist di host
+      - .:/app
+      # cache model faster-whisper agar tidak unduh ulang tiap restart
+      - hf_cache:/root/.cache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  # Akses publik opsional lewat Cloudflare quick tunnel (tanpa akun).
+  # Jalankan:  docker compose --profile public up -d
+  # URL publik muncul di:  docker compose logs tunnel
+  tunnel:
+    profiles: ["public"]
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate --url http://dashboard:5000
+    depends_on:
+      - dashboard
+    restart: unless-stopped
+
+volumes:
+  hf_cache:

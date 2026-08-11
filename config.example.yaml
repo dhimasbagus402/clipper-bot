@@ -1,0 +1,148 @@
+# ---------------------------------------------------------------------------
+# Clipper Studio — configuration template
+#
+#   cp config.example.yaml config.yaml      (Windows: copy config.example.yaml config.yaml)
+#
+# config.yaml is git-ignored. Everything here can also be edited from the
+# dashboard (Settings → Config / raw YAML editor).
+# ---------------------------------------------------------------------------
+
+paths:
+  projects: projects          # where per-project output folders are written
+  copy_source: false          # true = copy the source video into the project folder
+
+llm:
+  model: qwen2.5:7b           # any model you have pulled in Ollama
+  host: http://localhost:11434
+  temperature: 0.4
+  num_ctx: 8192
+  chunk_chars: 8000           # transcript is chunked before being sent to the LLM
+  think: false                # set true for reasoning models that support it
+
+transcript:
+  model: large-v3             # faster-whisper model: tiny .. large-v3
+  language: null              # null = auto-detect, or "en" / "id" / ...
+  device: auto                # auto | cuda | cpu
+  cpu_threads: 0              # 0 = auto
+  batch_size: 8
+
+clips:
+  max_clips: 30
+  min_seconds: 8
+  max_seconds: 32
+  buffer_seconds: 0.5         # padding added to each side of a cut
+
+editor:
+  scene_threshold: 0.3        # shot-change sensitivity
+  min_shot_seconds: 0.6
+  samples_per_shot: 5         # frames sampled per shot for face detection
+  speaker_detect: true        # follow the person who is actually talking
+  everyone_mode: blur         # blur | crop | none — what to do with other faces
+  talk_threshold: 1.2
+  zoom: 1.0
+  detector: yunet             # yunet | haar
+  speaker_model: av           # av = audio+visual, v = visual only
+  smooth_pan: true            # ease the crop between subjects instead of jumping
+  saliency_crop: false        # fallback framing when no face is found
+  audio_normalize: true
+  enhance: false              # light color/contrast pass
+  punch_in: false             # occasional punch-in zoom for energy
+  trim_silence: false
+  silence_threshold: -30
+  min_silence: 0.6
+  keep_padding: 0.1
+  gameplay_mode: false        # true for gameplay footage (see `gameplay` below)
+
+gameplay:
+  cam_file: ''                # optional separate facecam recording
+  split: 0.3                  # facecam share of the vertical frame
+  facecam: auto               # auto | none | a "x,y,w,h" region
+  facecam_w: 0.28
+  facecam_h: 0.35
+  cam_fit: fill               # fill | fit
+  cam_zoom: 0.8
+
+render:
+  width: 1080
+  height: 1920
+  fps: 30
+  crf: 20                     # lower = better quality, bigger file
+  preset: veryfast
+  video_codec: libx264        # h264_nvenc / hevc_nvenc if you have an NVIDIA GPU
+
+watermark:
+  enabled: false
+  type: image                 # image | text
+  path: ''                    # file inside assets/watermarks/
+  text: ''
+  position: top-center
+  x: 0.5
+  y: 0.1
+  scale: 0.35
+  opacity: 0.9
+  margin: 60
+  font: Arial
+  font_path: ''
+  font_size: 96
+  font_color: white
+  box: true
+  box_color: black@0.4
+  items: []                   # extra watermarks, placed visually from the dashboard
+
+subtitle:
+  words_per_line: 2           # 1-2 = karaoke style, 4+ = caption style
+  font: Arial
+  fontsize: 81
+  bold: true
+  primary_color: '&H0000FFFF' # ASS colours are &HAABBGGRR (this one = yellow)
+  secondary_color: '&H00FFFFFF'
+  outline_color: '&H00000000'
+  outline: 4
+  margin_v: 220               # distance from the bottom of the frame
+
+manager:
+  max_retries: 3
+  backoff_seconds: [5, 10, 20]
+
+seo:
+  language: auto              # auto | English | Indonesian | ...
+  max_hashtags: 8
+
+thumbnail:
+  enabled: true
+  font_size: 90
+  font_path: ''
+
+compliance:
+  enabled: true
+  mode: both                  # words | llm | both
+  llm_can_fail: false         # true = an LLM error marks the clip REVIEW instead of failing the run
+  review_words: []            # words that flag a clip for manual review
+  block_words: []             # words that fail a clip outright
+
+download:
+  max_height: 1080            # cap for yt-dlp downloads
+  max_live_hours: 4           # safety cap when capturing a livestream
+
+upload:
+  enabled: false              # keep false until you have tested the pipeline
+  privacy: private            # private | unlisted | public
+  category_id: '22'           # 22 = People & Blogs, 20 = Gaming, 24 = Entertainment
+  client_secret: client_secret.json
+  token: token.json
+  made_for_kids: false
+  set_thumbnail: false
+  only_status_pass: true      # upload only clips that passed QC + Compliance
+
+brief:
+  # Optional campaign brief. Fed to the Analyzer and SEO agents so clips and
+  # metadata follow your client's rules. Leave empty if you do not need it.
+  text: ''
+
+# Optional: override the built-in agent prompts. Easiest to edit from
+# Settings → Prompts in the dashboard, which validates the placeholders.
+#
+# prompts:
+#   analyzer:
+#     system: "..."
+#     user: "... {body} ..."

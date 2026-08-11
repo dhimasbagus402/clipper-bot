@@ -1,0 +1,24 @@
+# large data / renders — mounted at runtime, no need in the image
+projects/
+incoming/
+soundtracks/
+*.mp4
+*.mkv
+*.mov
+*.webm
+
+# secrets — must never end up in an image layer
+.env
+client_secret*.json
+token.json
+token_*.json
+channels.json
+
+# repo noise
+.git/
+.github/
+docs/
+__pycache__/
+*.pyc
+*.bak
+.claude/
