@@ -95,11 +95,11 @@ ollama pull qwen2.5:7b
 ## Install
 
 ```bash
-git clone https://github.com/<your-username>/clipper-studio.git
+git clone https://github.com/dhimasbagus402/clipper-bot.git
 ```
 
 ```bash
-cd clipper-studio && python -m venv .venv
+cd clipper-bot && python -m venv .venv
 ```
 
 Activate the virtualenv (`source .venv/bin/activate`, or `.venv\Scripts\activate` on Windows), then:
