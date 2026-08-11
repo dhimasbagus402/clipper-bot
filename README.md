@@ -90,6 +90,8 @@ Pull a model for Ollama — a 7B model is the safe default for 8–16 GB of VRAM
 ollama pull qwen2.5:7b
 ```
 
+*Note : You can always use different model*
+
 ---
 
 ## Install
@@ -185,7 +187,7 @@ Audio can also be extracted from any video or URL into a soundtrack library for 
 ### Tell the bot what you want
 
 Instead of hunting through settings, describe the change. The assistant is backed by the same
-local Ollama model and can change configuration, apply a campaign brief, attach a watermark or
+local  model and can change configuration, apply a campaign brief, attach a watermark or
 kick off a render — *"clips 10–30s, zoom out a bit, then run tes1.mp4"*.
 
 ![Ask the bot](docs/screenshots/02-assistant.png)
@@ -249,7 +251,7 @@ when several people talk at once, plus loudness normalisation, silence trimming 
 
 ### Models and campaign brief
 
-Point the pipeline at any Ollama model and any Whisper size. The campaign brief is persistent
+Point the pipeline at any  model and any Whisper size. The campaign brief is persistent
 context the Analyzer and SEO agents follow — paste a client's requirements once and every clip
 respects them.
 
@@ -276,7 +278,7 @@ python run.py incoming/podcast.mp4 --name "Podcast Ep 12"
 Results land in `projects/<ProjectID>/render/clip01.mp4`, `clip02.mp4`, … alongside
 `metadata/report.json`.
 
-To compare how different Ollama models pick highlights on a transcript you already have — no
+To compare how different  models pick highlights on a transcript you already have — no
 re-transcription:
 
 ```bash
@@ -317,7 +319,7 @@ A few environment variables override or supplement it:
 |---|---|
 | `DASH_USERNAME` / `DASH_PASSWORD` | Dashboard login. Empty password = no login (localhost only). |
 | `HOST` / `PORT` | Where the dashboard binds. Defaults to `127.0.0.1:5000`. |
-| `ACF_LLM_HOST` | Override the Ollama URL — used by Docker to reach the host. |
+| `ACF_LLM_HOST` | Override the  URL — used by Docker to reach the host. |
 | `OAUTH_REDIRECT_URL` | Google OAuth callback. Change it if you move the port. |
 | `DASH_MAX_UPLOAD_MB` | Total size cap per browser upload request. |
 | `HF_TOKEN` | Optional. Faster Whisper model downloads. |
