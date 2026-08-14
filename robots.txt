@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://dhimasbagus402.github.io/clipper-bot/sitemap.xml
