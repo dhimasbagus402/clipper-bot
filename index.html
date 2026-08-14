@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Clipper Studio — Turn Long Videos into Vertical Shorts, Locally</title>
+<meta name="description" content="Free open-source AI pipeline that turns one long video into a batch of ready-to-post 9:16 Shorts — Whisper, Ollama and ffmpeg, running on your own machine.">
+<meta name="author" content="Dhimas Bagus">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="canonical" href="https://dhimasbagus402.github.io/clipper-bot/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Clipper Studio">
+<meta property="og:title" content="Clipper Studio — Turn Long Videos into Vertical Shorts, Locally">
+<meta property="og:description" content="One long video in, a batch of ready-to-post 9:16 Shorts out. Whisper + Ollama + ffmpeg, running entirely on your own machine. Free and open source.">
+<meta property="og:url" content="https://dhimasbagus402.github.io/clipper-bot/">
+<meta property="og:image" content="https://raw.githubusercontent.com/dhimasbagus402/clipper-bot/main/docs/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Clipper Studio — one long video in, a batch of Shorts out">
+<meta property="og:locale" content="en_US">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Clipper Studio — Turn Long Videos into Vertical Shorts, Locally">
+<meta name="twitter:description" content="One long video in, a batch of ready-to-post 9:16 Shorts out. Whisper + Ollama + ffmpeg, running entirely on your own machine.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/dhimasbagus402/clipper-bot/main/docs/og-image.png">
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233b82f6'/%3E%3Cpath d='M12 9v14l11-7z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="docs/screenshots/01-home.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Clipper Studio",
+  "alternateName": "Clipper Bot",
+  "applicationCategory": "MultimediaApplication",
+  "applicationSubCategory": "Video Editing",
+  "operatingSystem": "Windows, Linux, macOS",
+  "url": "https://dhimasbagus402.github.io/clipper-bot/",
+  "downloadUrl": "https://github.com/dhimasbagus402/clipper-bot",
+  "codeRepository": "https://github.com/dhimasbagus402/clipper-bot",
+  "programmingLanguage": "Python",
+  "license": "https://opensource.org/licenses/MIT",
+  "description": "An open-source local AI pipeline that turns one long video into a batch of ready-to-post vertical Shorts: Whisper transcription, LLM highlight selection, speaker-aware 9:16 reframing, karaoke subtitles, SEO metadata, thumbnails and optional YouTube upload.",
+  "author": { "@type": "Person", "name": "Dhimas Bagus" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Local Whisper transcription with word-level timestamps",
+    "LLM highlight selection via Ollama",
+    "Speaker-aware 9:16 auto-reframing",
+    "Burned-in karaoke subtitles",
+    "Automatic titles, descriptions and hashtags",
+    "Thumbnail generation",
+    "Quality control and compliance checks",
+    "Multi-channel YouTube upload"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Do I need a GPU to run Clipper Studio?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. An NVIDIA GPU with CUDA makes transcription several times faster, but everything runs on CPU as well — it is simply slower on long videos." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is my video uploaded to a cloud service?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. Transcription uses faster-whisper and highlight selection uses Ollama, both running locally on your machine. The only network calls are the ones you ask for: downloading a source video, or uploading a finished clip to YouTube." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Clipper Studio check copyright or music licensing?",
+      "acceptedAnswer": { "@type": "Answer", "text": "No. The compliance agent scans language only. It has no knowledge of whether your music or footage is licensed, and YouTube's Content ID still applies to anything you upload." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which platforms can it upload to?",
+      "acceptedAnswer": { "@type": "Answer", "text": "YouTube only, through the YouTube Data API v3, with a separate OAuth token per channel. The TikTok, Instagram and Facebook tiles in the interface are placeholders for planned work." }
+    }
+  ]
+}
+</script>
+
+<style>
+:root{
+  --bg:#0a0a0c; --bg2:#101013; --card:#141418; --card2:#18181d;
+  --line:#232329; --line2:#2e2e36;
+  --txt:#ececeF; --txt2:#a5a5b2; --txt3:#71717f;
+  --acc:#3b82f6; --acc2:#60a5fa; --acc-soft:rgba(59,130,246,.13);
+  --ok:#34d399; --warn:#fbbf24;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --maxw:1140px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+:focus-visible{outline:2px solid var(--acc2);outline-offset:3px;border-radius:4px}
+h1,h2,h3{line-height:1.15;letter-spacing:-.022em;margin:0}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+.skip{position:absolute;left:-9999px;top:0;background:var(--acc);color:#fff;padding:10px 16px;border-radius:0 0 8px 0;z-index:100}
+.skip:focus{left:0}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:50;background:rgba(10,10,12,.82);
+  backdrop-filter:blur(14px);border-bottom:1px solid var(--line);
+}
+.nav-in{display:flex;align-items:center;gap:28px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:650;font-size:15.5px;color:var(--txt);letter-spacing:-.01em}
+.brand:hover{text-decoration:none}
+.brand-i{width:28px;height:28px;border-radius:8px;background:var(--acc);display:grid;place-items:center;flex:none}
+.nav-links{display:flex;gap:24px;margin-left:auto;align-items:center}
+.nav-links a{color:var(--txt2);font-size:14px;font-weight:500}
+.nav-links a:hover{color:var(--txt);text-decoration:none}
+.nav-cta{
+  background:var(--acc);color:#fff!important;padding:8px 15px;border-radius:8px;
+  font-weight:600;font-size:13.5px;display:inline-flex;align-items:center;gap:7px;
+}
+.nav-cta:hover{background:var(--acc2);text-decoration:none}
+@media(max-width:760px){.nav-links a:not(.nav-cta){display:none}}
+
+/* ---------- hero ---------- */
+.hero{position:relative;padding:96px 0 0;text-align:center;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:-40% 0 auto;height:620px;
+  background:radial-gradient(ellipse 50% 100% at 50% 0,rgba(59,130,246,.20),transparent 70%);
+  pointer-events:none;
+}
+.hero>*{position:relative}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;background:var(--acc-soft);
+  border:1px solid rgba(59,130,246,.28);color:var(--acc2);
+  padding:6px 14px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:26px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+h1{font-size:clamp(2.3rem,6vw,4rem);font-weight:700;margin-bottom:22px}
+h1 .grad{
+  background:linear-gradient(100deg,var(--acc2),#a78bfa);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lede{font-size:clamp(1.02rem,2.2vw,1.22rem);color:var(--txt2);max-width:680px;margin:0 auto 34px}
+.btns{display:flex;gap:13px;justify-content:center;flex-wrap:wrap;margin-bottom:22px}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;padding:13px 24px;border-radius:10px;
+  font-weight:600;font-size:15px;border:1px solid transparent;transition:.15s;
+}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-p{background:var(--acc);color:#fff}
+.btn-p:hover{background:var(--acc2)}
+.btn-s{background:var(--card);color:var(--txt);border-color:var(--line2)}
+.btn-s:hover{background:var(--card2);border-color:#3d3d48}
+.meta{color:var(--txt3);font-size:13.5px;display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.meta span{white-space:nowrap}
+.shot-wrap{margin-top:56px;padding-bottom:20px}
+.shot{
+  border:1px solid var(--line2);border-radius:14px;overflow:hidden;
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.03);
+  background:var(--card);
+}
+
+/* ---------- sections ---------- */
+section{padding:88px 0;border-top:1px solid var(--line)}
+.sec-head{max-width:660px;margin-bottom:46px}
+.sec-head.mid{margin-left:auto;margin-right:auto;text-align:center}
+.kicker{color:var(--acc2);font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;display:block;margin-bottom:12px}
+h2{font-size:clamp(1.6rem,3.6vw,2.3rem);font-weight:680;margin-bottom:14px}
+.sec-head p{color:var(--txt2);font-size:16.5px;margin:0}
+
+/* ---------- pipeline ---------- */
+.pipe{display:grid;gap:12px;grid-template-columns:repeat(3,1fr)}
+.step{
+  background:var(--card);border:1px solid var(--line);border-radius:11px;
+  padding:16px 18px;display:flex;gap:14px;align-items:flex-start;transition:.15s;
+}
+.step:hover{border-color:var(--line2);background:var(--card2)}
+.step i{
+  font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--acc2);
+  background:var(--acc-soft);border:1px solid rgba(59,130,246,.26);
+  border-radius:7px;padding:3px 8px;flex:none;line-height:1.5;
+}
+.step div{min-width:0}
+.step b{display:block;font-size:14.5px;font-weight:630;margin-bottom:3px}
+.step span{font-size:12.8px;color:var(--txt3);line-height:1.5;display:block}
+@media(max-width:880px){.pipe{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.pipe{grid-template-columns:1fr}}
+
+/* ---------- features ---------- */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+/* grid items default to min-width:auto, which lets wide children (tables, long
+   code lines) blow the track out past the viewport on small screens */
+.grid>*,.grid2>*,.row>*,.gal>*,.pipe>*{min-width:0}
+.feat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:24px;transition:.15s}
+.feat:hover{border-color:var(--line2);background:var(--card2)}
+.feat .ico{
+  width:38px;height:38px;border-radius:10px;background:var(--acc-soft);
+  display:grid;place-items:center;margin-bottom:15px;color:var(--acc2);
+}
+.feat h3{font-size:16px;font-weight:640;margin-bottom:7px}
+.feat p{color:var(--txt2);font-size:14.2px;margin:0;line-height:1.6}
+
+/* ---------- showcase ---------- */
+.row{display:grid;grid-template-columns:1fr 1.25fr;gap:52px;align-items:center;margin-bottom:76px}
+.row:last-child{margin-bottom:0}
+.row.flip{grid-template-columns:1.25fr 1fr}
+.row.flip .txt{order:2}
+.row h3{font-size:clamp(1.25rem,2.6vw,1.6rem);font-weight:650;margin-bottom:13px}
+.row p{color:var(--txt2);margin:0 0 18px;font-size:15.5px}
+.tags{display:flex;gap:8px;flex-wrap:wrap}
+.tag{
+  background:var(--card);border:1px solid var(--line2);color:var(--txt2);
+  font-size:12.5px;padding:5px 11px;border-radius:7px;font-family:var(--mono);
+}
+@media(max-width:840px){
+  .row,.row.flip{grid-template-columns:1fr;gap:26px;margin-bottom:56px}
+  .row.flip .txt{order:0}
+}
+
+/* ---------- gallery ---------- */
+.gal{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(310px,1fr))}
+.gal figure{margin:0}
+.gal button{
+  display:block;width:100%;padding:0;border:1px solid var(--line);background:var(--card);
+  border-radius:11px;overflow:hidden;cursor:zoom-in;transition:.15s;
+}
+.gal button:hover{border-color:var(--acc);transform:translateY(-2px)}
+.gal figcaption{color:var(--txt3);font-size:13px;margin-top:9px}
+
+/* ---------- code ---------- */
+.code{
+  background:#0d0d10;border:1px solid var(--line2);border-radius:11px;
+  position:relative;margin:0 0 14px;overflow:hidden;
+}
+/* wrap rather than scroll: a long clone URL must never hide under the copy button */
+.code pre{
+  margin:0;padding:16px 62px 16px 18px;font-family:var(--mono);font-size:13.2px;
+  line-height:1.75;color:#d6d6de;white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.code .cp{
+  position:absolute;top:9px;right:9px;background:var(--card2);border:1px solid var(--line2);
+  color:var(--txt3);border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:600;
+  cursor:pointer;font-family:var(--sans);transition:.15s;
+}
+.code .cp:hover{color:var(--txt);border-color:#41414d}
+.code .cp.ok{color:var(--ok);border-color:rgba(52,211,153,.45)}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps>li{counter-increment:s;position:relative;padding-left:52px;margin-bottom:34px}
+.steps>li::before{
+  content:counter(s);position:absolute;left:0;top:-2px;width:32px;height:32px;
+  border-radius:9px;background:var(--acc-soft);border:1px solid rgba(59,130,246,.3);
+  color:var(--acc2);display:grid;place-items:center;font-weight:700;font-size:14px;
+}
+.steps h3{font-size:16.5px;font-weight:620;margin-bottom:10px}
+.steps p{color:var(--txt2);font-size:14.6px;margin:0 0 12px}
+
+/* ---------- tables / notes ---------- */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;min-width:380px;border-collapse:collapse;font-size:14.6px}
+.tbl th,.tbl td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line)}
+.tbl th{color:var(--txt3);font-size:12px;text-transform:uppercase;letter-spacing:.06em;font-weight:650}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.note{
+  background:var(--card);border:1px solid var(--line);border-left:3px solid var(--warn);
+  border-radius:0 11px 11px 0;padding:18px 22px;margin-bottom:16px;
+}
+.note b{display:block;margin-bottom:5px;font-size:15px;font-weight:620}
+.note p{margin:0;color:var(--txt2);font-size:14.6px}
+
+/* ---------- faq ---------- */
+details{background:var(--card);border:1px solid var(--line);border-radius:11px;margin-bottom:11px;overflow:hidden}
+details[open]{border-color:var(--line2)}
+summary{padding:17px 22px;cursor:pointer;font-weight:600;font-size:15.5px;list-style:none;display:flex;justify-content:space-between;gap:16px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--acc2);font-size:20px;font-weight:400;flex:none;transition:.2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{margin:0;padding:0 22px 20px;color:var(--txt2);font-size:14.8px}
+
+/* ---------- support ---------- */
+.sup{
+  background:linear-gradient(165deg,var(--card2),var(--card));
+  border:1px solid var(--line2);border-radius:16px;padding:48px 40px;text-align:center;
+}
+.sup h2{margin-bottom:12px}
+.sup>p{color:var(--txt2);max-width:520px;margin:0 auto 30px}
+.donate{display:flex;gap:13px;justify-content:center;flex-wrap:wrap}
+.dbtn{
+  display:inline-flex;align-items:center;gap:10px;padding:13px 24px;border-radius:10px;
+  font-weight:640;font-size:15px;color:#fff!important;transition:.15s;
+}
+.dbtn:hover{text-decoration:none;transform:translateY(-2px);filter:brightness(1.1)}
+.d1{background:#e02f2f}.d2{background:#f2711c}.d3{background:#29abe0}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);padding:44px 0;color:var(--txt3);font-size:14px}
+.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+.foot-links{display:flex;gap:22px;flex-wrap:wrap}
+
+/* ---------- lightbox ---------- */
+#lb{
+  position:fixed;inset:0;background:rgba(5,5,7,.94);z-index:200;
+  display:none;place-items:center;padding:28px;cursor:zoom-out;
+}
+#lb.on{display:grid}
+#lb img{max-width:100%;max-height:90vh;border-radius:10px;border:1px solid var(--line2)}
+#lb .x{position:absolute;top:18px;right:22px;background:none;border:0;color:var(--txt2);font-size:34px;cursor:pointer;line-height:1}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{transition:none!important;animation:none!important}
+  .btn:hover,.gal button:hover,.dbtn:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="#top">
+      <span class="brand-i" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></span>
+      Clipper Studio
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#screens">Screenshots</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+      <a class="nav-cta" href="https://github.com/dhimasbagus402/clipper-bot" rel="noopener">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<section class="hero" id="top" style="border-top:0">
+  <div class="wrap">
+    <span class="pill"><span class="dot" aria-hidden="true"></span> Runs 100% on your own machine</span>
+    <h1>One long video in.<br><span class="grad">A batch of Shorts out.</span></h1>
+    <p class="lede">
+      Clipper Studio transcribes your podcast, interview, stream VOD or gameplay recording, asks a
+      local LLM which moments are worth cutting, reframes each one to 9:16 while following whoever is
+      talking, burns in karaoke subtitles, writes the metadata — and uploads it if you want.
+    </p>
+    <div class="btns">
+      <a class="btn btn-p" href="https://github.com/dhimasbagus402/clipper-bot" rel="noopener">Get it on GitHub</a>
+      <a class="btn btn-s" href="#install">Quick start</a>
+    </div>
+    <p class="meta">
+      <span>MIT licensed</span><span aria-hidden="true">·</span>
+      <span>Python 3.10+</span><span aria-hidden="true">·</span>
+      <span>No paid API</span><span aria-hidden="true">·</span>
+      <span>Windows · Linux · macOS</span>
+    </p>
+    <div class="shot-wrap">
+      <div class="shot">
+        <img src="docs/screenshots/01-home.png" width="1440" height="950"
+             alt="Clipper Studio dashboard showing the New render panel with source video, URL and file upload options">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head mid">
+      <span class="kicker">How it works</span>
+      <h2>Nine small agents, one at a time</h2>
+      <p>A manager runs each stage in order with retries and per-project logging. Every stage writes
+         its output to disk, so you can inspect, fix or re-run any part of it by hand.</p>
+    </div>
+    <div class="pipe">
+      <div class="step"><i>01</i><div><b>Transcript</b><span>faster-whisper, word-level timestamps</span></div></div>
+      <div class="step"><i>02</i><div><b>Analyzer</b><span>LLM scores highlight ranges</span></div></div>
+      <div class="step"><i>03</i><div><b>Editor</b><span>Cut + speaker-aware 9:16 crop</span></div></div>
+      <div class="step"><i>04</i><div><b>Subtitle</b><span>Karaoke ASS, burned into the render</span></div></div>
+      <div class="step"><i>05</i><div><b>SEO</b><span>Title, description, hashtags</span></div></div>
+      <div class="step"><i>06</i><div><b>Thumbnail</b><span>Best frame + title stamp</span></div></div>
+      <div class="step"><i>07</i><div><b>QC</b><span>Duration, resolution, playable</span></div></div>
+      <div class="step"><i>08</i><div><b>Compliance</b><span>Word list + LLM policy scan</span></div></div>
+      <div class="step"><i>09</i><div><b>Upload</b><span>YouTube, private by default</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Features</span>
+      <h2>Everything the pipeline gives you</h2>
+      <p>Built for people who cut a lot of clips and got tired of doing the same nine steps by hand.</p>
+    </div>
+    <div class="grid">
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v10M8 6l4-4 4 4"/><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></svg></div>
+        <h3>Five ways to get video in</h3>
+        <p>A file from <code>incoming/</code>, one or more video or livestream URLs, a browser upload, a Google Drive folder, or any path on disk.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 14 9l6 2-6 2-2 6-2-6-6-2 6-2z"/></svg></div>
+        <h3>Speaker-aware reframing</h3>
+        <p>YuNet face detection plus audio-visual speaker detection, so the vertical crop follows whoever is actually talking instead of the biggest face.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h11M4 18h7"/></svg></div>
+        <h3>Karaoke subtitles</h3>
+        <p>Word-by-word ASS subtitles burned into the render, with font, size, colour, outline and vertical margin all configurable.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="m7 13 3-3 3 3 4-4"/></svg></div>
+        <h3>Metadata that is ready to post</h3>
+        <p>Title, description, hashtags and keywords per clip, in the language you pick — shaped by a persistent campaign brief if you have one.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Pause and stop that behave</h3>
+        <p>Cooperative checkpoints between agents, clips and segments — a stop never leaves you with a half-written render.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
+        <h3>Tunable without touching code</h3>
+        <p>Clip length, crop tightness, loudness, silence trimming, subtitle style and the agent prompts themselves — all editable from the dashboard.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 3v9l6.5 6.5"/></svg></div>
+        <h3>Multi-channel upload</h3>
+        <p>Each YouTube channel keeps its own OAuth token. Bulk-select clips and send them out — only the ones that passed QC and compliance.</p>
+      </article>
+      <article class="feat">
+        <div class="ico" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 9h8M8 13h5"/></svg></div>
+        <h3>Talk to it in plain language</h3>
+        <p>"Clips 10–30s, zoom out a bit, then run tes1.mp4" — the built-in assistant changes settings, applies briefs and starts renders.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">The dashboard</span>
+      <h2>A local web UI for the whole pipeline</h2>
+      <p>One Flask app on <code>127.0.0.1:5000</code>. Screenshots below use a small synthetic demo
+         dataset, so the projects and clips shown are placeholders.</p>
+    </div>
+
+    <div class="row">
+      <div class="txt">
+        <h3>Review before anything goes out</h3>
+        <p>Every clip shows its thumbnail, the score the LLM gave it, the generated title, duration,
+           QC and compliance status, and whether it is already published. Select any combination and
+           upload or delete them together.</p>
+        <div class="tags"><span class="tag">bulk select</span><span class="tag">editable SEO</span><span class="tag">QC badges</span></div>
+      </div>
+      <div class="shot">
+        <img src="docs/screenshots/06-project-detail.png" width="1440" height="1400" loading="lazy" decoding="async"
+             alt="Project detail page showing a grid of generated vertical clips with scores, titles and publish status">
+      </div>
+    </div>
+
+    <div class="row flip">
+      <div class="txt">
+        <h3>Place a watermark by dragging it</h3>
+        <p>Upload a logo or add a text handle, then drag it onto a real frame from your latest render.
+           The yellow zone marks where subtitles will sit, so you do not cover them. Watermarks can
+           also be applied to an already-rendered project.</p>
+        <div class="tags"><span class="tag">live preview</span><span class="tag">multi-watermark</span><span class="tag">re-apply</span></div>
+      </div>
+      <div class="shot">
+        <img src="docs/screenshots/09-watermark.png" width="1190" height="695" loading="lazy" decoding="async"
+             alt="Watermark placement panel with a draggable preview frame and the subtitle safe zone highlighted">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="txt">
+        <h3>Tune the framing until it looks right</h3>
+        <p>How tightly the 9:16 crop holds a face, whether it follows the active speaker, what happens
+           when several people talk at once — plus loudness normalisation, silence trimming and
+           punch-in motion.</p>
+        <div class="tags"><span class="tag">YuNet</span><span class="tag">AV speaker detect</span><span class="tag">−14 LUFS</span></div>
+      </div>
+      <div class="shot">
+        <img src="docs/screenshots/10-framing.png" width="1190" height="785" loading="lazy" decoding="async"
+             alt="Framing settings with zoom slider, speaker tracking toggle and advanced detector options">
+      </div>
+    </div>
+
+    <h3 style="font-size:17px;font-weight:640;margin:0 0 20px">More of the interface</h3>
+    <div class="gal">
+      <figure>
+        <button type="button" data-src="docs/screenshots/02-assistant.png" data-alt="Ask the bot panel accepting natural-language instructions">
+          <img src="docs/screenshots/02-assistant.png" width="1190" height="290" loading="lazy" decoding="async" alt="Ask the bot panel accepting natural-language instructions">
+        </button>
+        <figcaption>Natural-language control over settings, briefs and renders</figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-src="docs/screenshots/03-pipeline-log.png" data-alt="Pipeline progress with stage indicators and a live log tail">
+          <img src="docs/screenshots/03-pipeline-log.png" width="1190" height="505" loading="lazy" decoding="async" alt="Pipeline progress with stage indicators and a live log tail">
+        </button>
+        <figcaption>Stage-by-stage progress with a live log tail</figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-src="docs/screenshots/05-projects.png" data-alt="Projects list with clip counts, runtime and status">
+          <img src="docs/screenshots/05-projects.png" width="1440" height="660" loading="lazy" decoding="async" alt="Projects list with clip counts, runtime and status">
+        </button>
+        <figcaption>Every render, searchable, pinned first</figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-src="docs/screenshots/08-settings-channels.png" data-alt="Channel settings showing per-account YouTube OAuth tokens">
+          <img src="docs/screenshots/08-settings-channels.png" width="1190" height="1000" loading="lazy" decoding="async" alt="Channel settings showing per-account YouTube OAuth tokens">
+        </button>
+        <figcaption>One OAuth token per YouTube channel</figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-src="docs/screenshots/07-browse.png" data-alt="File browser listing folders on disk with a send-to-pipeline action">
+          <img src="docs/screenshots/07-browse.png" width="1440" height="700" loading="lazy" decoding="async" alt="File browser listing folders on disk with a send-to-pipeline action">
+        </button>
+        <figcaption>Send footage from anywhere on disk, without copying</figcaption>
+      </figure>
+      <figure>
+        <button type="button" data-src="docs/screenshots/12-prompts-yaml.png" data-alt="Agent prompt editors for the Analyzer, SEO and Compliance agents">
+          <img src="docs/screenshots/12-prompts-yaml.png" width="1190" height="525" loading="lazy" decoding="async" alt="Agent prompt editors for the Analyzer, SEO and Compliance agents">
+        </button>
+        <figcaption>Rewrite the agent prompts, with placeholder validation</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Quick start</span>
+      <h2>Running in about five minutes</h2>
+      <p>Assuming ffmpeg and Ollama are already on your machine. Full details are in the README.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px" class="grid2">
+      <div>
+        <ol class="steps">
+          <li>
+            <h3>Install the prerequisites</h3>
+            <p>Python 3.10+, ffmpeg and ffprobe on your <code>PATH</code>, and Ollama with a model pulled.</p>
+            <div class="code"><button class="cp" type="button">Copy</button><pre>ollama pull qwen2.5:7b</pre></div>
+          </li>
+          <li>
+            <h3>Clone and install</h3>
+            <p>A virtualenv is recommended but not required.</p>
+            <div class="code"><button class="cp" type="button">Copy</button><pre>git clone https://github.com/dhimasbagus402/clipper-bot.git
+cd clipper-bot
+pip install -r requirements.txt -r requirements-dashboard.txt</pre></div>
+          </li>
+          <li>
+            <h3>Create your config</h3>
+            <p>Both files are git-ignored — <code>config.yaml</code> holds your settings, <code>.env</code> your dashboard password.</p>
+            <div class="code"><button class="cp" type="button">Copy</button><pre>cp config.example.yaml config.yaml
+cp .env.example .env</pre></div>
+          </li>
+          <li>
+            <h3>Start the dashboard</h3>
+            <p>Then open <a href="http://127.0.0.1:5000">127.0.0.1:5000</a> and drop in a video.</p>
+            <div class="code"><button class="cp" type="button">Copy</button><pre>python dashboard.py</pre></div>
+          </li>
+        </ol>
+      </div>
+
+      <div>
+        <h3 style="font-size:16.5px;font-weight:640;margin-bottom:14px">What you need</h3>
+        <div class="tbl-wrap">
+        <table class="tbl">
+          <tbody>
+            <tr><td>Python</td><td>3.10 or newer</td></tr>
+            <tr><td>ffmpeg</td><td>ffmpeg + ffprobe on <code>PATH</code></td></tr>
+            <tr><td>Ollama</td><td>Running locally, one model pulled</td></tr>
+            <tr><td>GPU</td><td>Optional — CUDA speeds up transcription</td></tr>
+            <tr><td>Disk</td><td>Renders are large; plan for several GB per hour of source</td></tr>
+          </tbody>
+        </table>
+        </div>
+
+        <h3 style="font-size:16.5px;font-weight:640;margin:34px 0 14px">Prefer Docker?</h3>
+        <p style="color:var(--txt2);font-size:14.6px;margin:0 0 14px">
+          The compose file mounts the project directory, so config, projects and tokens stay on the host.
+          Ollama is expected to run on the host, not in the container.
+        </p>
+        <div class="code"><button class="cp" type="button">Copy</button><pre>docker compose up -d --build</pre></div>
+
+        <h3 style="font-size:16.5px;font-weight:640;margin:34px 0 14px">No dashboard needed</h3>
+        <p style="color:var(--txt2);font-size:14.6px;margin:0 0 14px">The pipeline also runs headless.</p>
+        <div class="code"><button class="cp" type="button">Copy</button><pre>python run.py incoming/podcast.mp4</pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="limits">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Before you rely on it</span>
+      <h2>What this does not do</h2>
+      <p>Worth reading before you point it at a client campaign.</p>
+    </div>
+    <div class="note">
+      <b>Copyright is not checked.</b>
+      <p>The compliance agent scans language, nothing else. It has no idea whether your music or
+         footage is licensed, and YouTube's Content ID still applies to everything you upload.</p>
+    </div>
+    <div class="note">
+      <b>Highlight scores are relative, not predictive.</b>
+      <p>The LLM ranks moments within one video. A 94 does not mean the clip will perform — it means
+         the model liked it more than the 79.</p>
+    </div>
+    <div class="note">
+      <b>Reframing is good, not perfect.</b>
+      <p>Speaker tracking works well for talking-head content. Fast-moving subjects and crowded frames
+         still produce awkward crops.</p>
+    </div>
+    <div class="note">
+      <b>YouTube uploads only.</b>
+      <p>The TikTok, Instagram and Facebook tiles in the interface are placeholders for planned work,
+         not working integrations.</p>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap" style="max-width:820px">
+    <div class="sec-head mid">
+      <span class="kicker">FAQ</span>
+      <h2>Common questions</h2>
+    </div>
+    <details>
+      <summary>Do I need a GPU?</summary>
+      <p>No. An NVIDIA GPU with CUDA makes transcription several times faster, but everything runs on
+         CPU as well — it is simply slower on long videos.</p>
+    </details>
+    <details>
+      <summary>Is my video uploaded to a cloud service?</summary>
+      <p>No. Transcription uses faster-whisper and highlight selection uses Ollama, both running
+         locally. The only network calls are the ones you ask for: downloading a source video, or
+         uploading a finished clip to YouTube.</p>
+    </details>
+    <details>
+      <summary>Does it check copyright or music licensing?</summary>
+      <p>No. The compliance agent scans language only. It has no knowledge of whether your music or
+         footage is licensed, and YouTube's Content ID still applies to anything you upload.</p>
+    </details>
+    <details>
+      <summary>How many clips can I upload per day?</summary>
+      <p>One upload costs roughly 1,600 units of YouTube's default 10,000/day quota, so about six
+         uploads per day unless you request more from Google.</p>
+    </details>
+    <details>
+      <summary>Can I expose the dashboard on my network?</summary>
+      <p>Yes, but set <code>DASH_PASSWORD</code> first. The dashboard can browse your filesystem,
+         start renders and upload to your account, so it must not be left open.</p>
+    </details>
+    <details>
+      <summary>Can I change what the AI is told to do?</summary>
+      <p>Yes. The system and user prompts for the Analyzer, SEO and Compliance agents are editable
+         from Settings, with validation so you cannot save a prompt that breaks at render time.</p>
+    </details>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sup">
+      <h2>Support the project</h2>
+      <p>Clipper Studio is free and open source. If it saves you time, you can buy me a coffee.</p>
+      <div class="donate">
+        <a class="dbtn d1" href="https://trakteer.id/dhimas_bagus4/tip" rel="noopener">Trakteer</a>
+        <a class="dbtn d2" href="https://sociabuzz.com/dhimasbagus402/tribe" rel="noopener">SociaBuzz</a>
+        <a class="dbtn d3" href="https://ko-fi.com/dhimasbagus" rel="noopener">Ko-fi</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <p style="margin:0">Clipper Studio — MIT licensed. Built by <a href="https://github.com/dhimasbagus402" rel="noopener">Dhimas Bagus</a>.</p>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://github.com/dhimasbagus402/clipper-bot" rel="noopener">Repository</a>
+      <a href="https://github.com/dhimasbagus402/clipper-bot#readme" rel="noopener">Documentation</a>
+      <a href="https://github.com/dhimasbagus402/clipper-bot/issues" rel="noopener">Issues</a>
+    </nav>
+  </div>
+</footer>
+
+<div id="lb" role="dialog" aria-modal="true" aria-label="Enlarged screenshot">
+  <button class="x" type="button" aria-label="Close">&times;</button>
+  <img alt="">
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* copy buttons */
+  document.querySelectorAll(".code .cp").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var code = btn.parentElement.querySelector("pre").innerText;
+      navigator.clipboard.writeText(code).then(function(){
+        btn.textContent = "Copied";
+        btn.classList.add("ok");
+        setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1600);
+      });
+    });
+  });
+
+  /* lightbox */
+  var lb = document.getElementById("lb");
+  var lbImg = lb.querySelector("img");
+  var last = null;
+
+  function open(src, alt, trigger){
+    lbImg.src = src;
+    lbImg.alt = alt || "";
+    lb.classList.add("on");
+    document.body.style.overflow = "hidden";
+    last = trigger;
+    lb.querySelector(".x").focus();
+  }
+  function close(){
+    lb.classList.remove("on");
+    lbImg.src = "";
+    document.body.style.overflow = "";
+    if (last) { last.focus(); last = null; }
+  }
+
+  document.querySelectorAll(".gal button").forEach(function(b){
+    b.addEventListener("click", function(){
+      open(b.dataset.src, b.dataset.alt, b);
+    });
+  });
+  lb.addEventListener("click", close);
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" && lb.classList.contains("on")) close();
+  });
+})();
+</script>
+
+<style>
+@media(max-width:840px){ .grid2{grid-template-columns:1fr!important;gap:34px!important} }
+</style>
+</body>
+</html>
