@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/clipper-bot",
+      "destination": "https://clipper-bot.vercel.app"
+    },
+    {
+      "source": "/clipper-bot/:path*",
+      "destination": "https://clipper-bot.vercel.app/:path*"
+    }
+  ]
+}
